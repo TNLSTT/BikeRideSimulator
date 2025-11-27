@@ -62,9 +62,15 @@ def main() -> None:
 
     print("\nRoute profile:")
     print(f"  Total length: {route.total_length/1000:.2f} km")
-    for i, segment in enumerate(route.segments, 1):
-        pct = segment.gradient * 100
-        print(f"  Segment {i}: {segment.length/1000:.2f} km at {pct:+.1f}%")
+    for segment in route.terrain_profile():
+        print(
+            "  Segment {segment}: {length:.2f} km {terrain} at {gradient:+.1f}%".format(
+                segment=segment["segment"],
+                length=segment["length_km"],
+                terrain=segment["terrain"],
+                gradient=segment["gradient_pct"],
+            )
+        )
 
     print("\nSimulation config:")
     print(f"  Races: {config.races}, dt: {config.dt}s, drafting: {config.draft}")
@@ -80,6 +86,18 @@ def main() -> None:
     for trait, values in summary["traits"].items():
         avg = sum(values) / len(values)
         print(f"  {trait}: {avg:.2f}")
+
+    print("\nRoute terrain (from simulation summary):")
+    print(f"  Total length: {summary['route_total_km']:.2f} km")
+    for segment in summary["route_profile"]:
+        print(
+            "  Segment {segment}: {length:.2f} km {terrain} at {gradient:+.1f}%".format(
+                segment=segment["segment"],
+                length=segment["length_km"],
+                terrain=segment["terrain"],
+                gradient=segment["gradient_pct"],
+            )
+        )
 
 
 if __name__ == "__main__":
