@@ -70,7 +70,12 @@ class Simulator:
             trait_logs["cda"].append(winning_rider.cda)
 
         wins = {k: v / self.config.races for k, v in win_counter.items()}
-        summary = {"wins": wins, "traits": trait_logs}
+        summary = {
+            "wins": wins,
+            "traits": trait_logs,
+            "route_profile": self.route.terrain_profile(),
+            "route_total_km": self.route.total_length / 1000.0,
+        }
         return summary
 
 
