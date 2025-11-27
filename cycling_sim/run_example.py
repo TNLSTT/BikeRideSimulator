@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import random
 from collections import Counter
 from dataclasses import dataclass
@@ -40,14 +41,40 @@ def _sample_riders_for_display(seed: int, count: int) -> list[RiderSnapshot]:
     return riders
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run repeated race simulations")
+    parser.add_argument(
+        "--races",
+        type=int,
+        default=2000,
+        help="Number of simulated races to run (default: 2000)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help="Random seed for repeatable runs (default: 42)",
+    )
+    parser.add_argument(
+        "--progress-interval",
+        type=int,
+        default=200,
+        help="How often to print progress updates (in races)",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     # Keeping a fixed seed makes repeated runs deterministic. Change or remove this
     # value to explore different random draws.
-    seed = 42
+    seed = args.seed
     random.seed(seed)
 
     route = default_route()
-    config = SimulationConfig(races=100, dt=0.2)
+    config = SimulationConfig(
+        races=args.races, dt=0.2, progress=True, progress_interval=args.progress_interval
+    )
     simulator = Simulator(route, config)
 
     # Preview the traits for the first race (same seed used for the actual run).
@@ -82,11 +109,6 @@ def main() -> None:
     for name, fraction in wins:
         print(f"  {name}: {fraction:.2f}")
 
-    print("\nSample winner traits (averages):")
-    for trait, values in summary["traits"].items():
-        avg = sum(values) / len(values)
-        print(f"  {trait}: {avg:.2f}")
-
     print("\nRoute terrain (from simulation summary):")
     print(f"  Total length: {summary['route_total_km']:.2f} km")
     for segment in summary["route_profile"]:
@@ -98,6 +120,23 @@ def main() -> None:
                 gradient=segment["gradient_pct"],
             )
         )
+
+    print("\nWinning terrain style (fraction of races):")
+    for style, fraction in summary["style_fraction"].items():
+        print(f"  {style}: {fraction:.2f}")
+
+    print("\nAverage winning ride snapshot:")
+    for trait, values in summary["traits"].items():
+        avg = sum(values) / len(values)
+        print(f"  {trait}: {avg:.2f}")
+    print(
+        "  avg_finish_time: {:.1f} s ({} km)".format(
+            summary["avg_finish_time"], summary["route_total_km"]
+        )
+    )
+    print(
+        "  avg_winner_speed: {:.1f} kph".format(summary["avg_winner_speed_kph"])
+    )
 
 
 if __name__ == "__main__":
